@@ -18,7 +18,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
-
+#define WITH_SSL
 
 #ifndef _DB_REDIS_MOD_H
 #define _DB_REDIS_MOD_H

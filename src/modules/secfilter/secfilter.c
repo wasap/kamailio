@@ -459,45 +459,88 @@ static int check_user(struct sip_msg *msg, int type)
 	/* User whitelisted */
 	list = (*secf_data)->wl.user;
 	while(list) {
-		if(name.len > list->s.len)
-			name.len = list->s.len;
-		if(name.s != NULL) {
-			res = cmpi_str(&list->s, &name);
+		if(secf_user_exact_match == 1) {
+			if(list->s.len == name.len) {
+				if(name.s != NULL) {
+					res = cmpi_str(&list->s, &name);
+					if(res == 0) {
+						lock_get(secf_lock);
+						switch(type) {
+							case 1:
+								secf_stats[WL_FNAME]++;
+								break;
+							case 2:
+								secf_stats[WL_TNAME]++;
+								break;
+							case 3:
+								secf_stats[WL_CNAME]++;
+								break;
+						}
+						lock_release(secf_lock);
+						return 4;
+					}
+				}
+			}
+			if(list->s.len == user.len) {
+				res = cmpi_str(&list->s, &user);
+				if(res == 0) {
+					lock_get(secf_lock);
+					switch(type) {
+						case 1:
+							secf_stats[WL_FUSER]++;
+							break;
+						case 2:
+							secf_stats[WL_TUSER]++;
+							break;
+						case 3:
+							secf_stats[WL_CUSER]++;
+							break;
+					}
+					lock_release(secf_lock);
+					return 2;
+				}
+			}
+		} else {
+			if(name.len > list->s.len)
+				name.len = list->s.len;
+			if(name.s != NULL) {
+				res = cmpi_str(&list->s, &name);
+				if(res == 0) {
+					lock_get(secf_lock);
+					switch(type) {
+						case 1:
+							secf_stats[WL_FNAME]++;
+							break;
+						case 2:
+							secf_stats[WL_TNAME]++;
+							break;
+						case 3:
+							secf_stats[WL_CNAME]++;
+							break;
+					}
+					lock_release(secf_lock);
+					return 4;
+				}
+			}
+			if(user.len > list->s.len)
+				user.len = list->s.len;
+			res = cmpi_str(&list->s, &user);
 			if(res == 0) {
 				lock_get(secf_lock);
 				switch(type) {
 					case 1:
-						secf_stats[WL_FNAME]++;
+						secf_stats[WL_FUSER]++;
 						break;
 					case 2:
-						secf_stats[WL_TNAME]++;
+						secf_stats[WL_TUSER]++;
 						break;
 					case 3:
-						secf_stats[WL_CNAME]++;
+						secf_stats[WL_CUSER]++;
 						break;
 				}
 				lock_release(secf_lock);
-				return 4;
+				return 2;
 			}
-		}
-		if(user.len > list->s.len)
-			user.len = list->s.len;
-		res = cmpi_str(&list->s, &user);
-		if(res == 0) {
-			lock_get(secf_lock);
-			switch(type) {
-				case 1:
-					secf_stats[WL_FUSER]++;
-					break;
-				case 2:
-					secf_stats[WL_TUSER]++;
-					break;
-				case 3:
-					secf_stats[WL_CUSER]++;
-					break;
-			}
-			lock_release(secf_lock);
-			return 2;
 		}
 		list = list->next;
 		name.len = nlen;

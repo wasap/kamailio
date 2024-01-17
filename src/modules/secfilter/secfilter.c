@@ -457,7 +457,7 @@ static int check_user(struct sip_msg *msg, int type)
 	dlen = domain.len;
 
 	/* User whitelisted */
-	list = secf_data->wl.user;
+	list = (*secf_data)->wl.user;
 	while(list) {
 		if(name.len > list->s.len)
 			name.len = list->s.len;

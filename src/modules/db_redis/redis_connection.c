@@ -40,6 +40,7 @@ extern int db_redis_opt_tls;
 extern char *db_redis_ca_path;
 #endif
 extern char *db_redis_db_pass;
+extern char *db_redis_db_user;
 
 static void print_query(redis_key_t *query)
 {
@@ -129,6 +130,7 @@ int db_redis_connect(km_redis_con_t *con)
 	redisSSLContext *ssl = NULL;
 #endif
 	char *password = NULL;
+	char *username = NULL;
 
 	tv.tv_sec = 1;
 	tv.tv_usec = 0;
@@ -240,8 +242,12 @@ int db_redis_connect(km_redis_con_t *con)
 	if(!password) {
 		password = db_redis_db_pass;
 	}
+	username = con->id->username;
+	if(!username) {
+		username = db_redis_db_user;
+	}
 	if(password) {
-		reply = redisCommand(con->con, "AUTH %s", password);
+		reply = username ? redisCommand(con->con, "AUTH %s %s", username, password) : redisCommand(con->con, "AUTH %s", password);
 		if(!reply) {
 			LM_ERR("cannot authenticate connection %.*s: %s\n",
 					con->id->url.len, con->id->url.s, con->con->errstr);

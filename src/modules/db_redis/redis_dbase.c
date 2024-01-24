@@ -846,15 +846,15 @@ static int db_redis_scan_query_keys_pattern(km_redis_con_t *con,
 
 #ifdef USE_SCAN
 
-	char cursor_str[32] = "";
-	unsigned long cursor = 0;
+	char cursor_str[64] = "0";
+	// unsigned long cursor = 0;
 	unsigned int match_count = match_count_start_val;
 	char match_count_str[16];
 	struct timeval start_tv, end_tv;
 	long tv_diff;
 
 	do {
-		snprintf(cursor_str, sizeof(cursor_str), "%lu", cursor);
+		// snprintf(cursor_str, sizeof(cursor_str), "%lu", cursor);
 
 		if(!index_key || !index_key->len) {
 			if(db_redis_key_add_string(&query_v, "SCAN", 4) != 0) {
@@ -923,17 +923,18 @@ static int db_redis_scan_query_keys_pattern(km_redis_con_t *con,
 		}
 
 		if(reply->element[0]->type == REDIS_REPLY_STRING) {
-			cursor = atol(reply->element[0]->str);
+			strncpy(cursor_str, reply->element[0]->str, sizeof(cursor_str));
 		} else if(reply->element[0]->type == REDIS_REPLY_INTEGER) {
 			// should not happen, but play it safe
-			cursor = reply->element[0]->integer;
+			snprintf(cursor_str, sizeof(cursor_str), "%lu", reply->element[0]->integer);
+			// cursor = reply->element[0]->integer;
 		} else {
 			LM_ERR("Invalid cursor type for scan on table '%.*s', expected "
 				   "string or integer\n",
 					match_pattern->len, match_pattern->s);
 			goto err;
 		}
-		LM_DBG("cursor is %lu\n", cursor);
+		LM_DBG("cursor is %s\n", cursor_str);
 
 		keys_list = reply->element[1];
 
@@ -1007,7 +1008,7 @@ static int db_redis_scan_query_keys_pattern(km_redis_con_t *con,
 			match_count /= 2;
 		else if(tv_diff < 25 && match_count < 1000000)
 			match_count *= 2;
-		if(cursor > 0) {
+		if(strcmp(cursor_str, "0")) {
 			// give other queries some time to run
 			usleep(100000);
 		}
@@ -1016,7 +1017,7 @@ static int db_redis_scan_query_keys_pattern(km_redis_con_t *con,
 		db_redis_free_reply(&reply);
 
 #ifdef USE_SCAN
-	} while(cursor > 0);
+	} while(strcmp(cursor_str, "0"));
 #endif
 
 #ifdef WITH_HIREDIS_CLUSTER

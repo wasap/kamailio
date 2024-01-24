@@ -926,7 +926,7 @@ static int db_redis_scan_query_keys_pattern(km_redis_con_t *con,
 			strncpy(cursor_str, reply->element[0]->str, sizeof(cursor_str));
 		} else if(reply->element[0]->type == REDIS_REPLY_INTEGER) {
 			// should not happen, but play it safe
-			snprintf(cursor_str, sizeof(cursor_str), "%lu", reply->element[0]->integer);
+			snprintf(cursor_str, sizeof(cursor_str), "%llu", reply->element[0]->integer);
 			// cursor = reply->element[0]->integer;
 		} else {
 			LM_ERR("Invalid cursor type for scan on table '%.*s', expected "
